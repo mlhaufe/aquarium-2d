@@ -1,8 +1,7 @@
-import { sayHello } from "./greet";
-
-function showHello(name: string) {
-    const main = document.getElementsByTagName("main")[0];
-    main.textContent = sayHello(name);
+class Main {
+    static load(){
+        const main = document.getElementsByTagName("main")[0]
+    }
 }
 
-showHello("TypeScript");
+document.body.onload = Main.load

@@ -3,7 +3,8 @@ var browserify = require("browserify");
 var source = require('vinyl-source-stream');
 var tsify = require("tsify");
 var paths = {
-    pages: ['src/*.html']
+    pages: ['src/*.html'],
+    styles: ['src/*.css']
 };
 
 gulp.task("copy-html", function () {
@@ -11,7 +12,12 @@ gulp.task("copy-html", function () {
         .pipe(gulp.dest("dist"));
 });
 
-gulp.task("default", ["copy-html"], function () {
+gulp.task("copy-css", function(){
+    return gulp.src(paths.styles)
+        .pipe(gulp.dest("dist"));
+});
+
+gulp.task("default", ["copy-html", "copy-css"], function () {
     return browserify({
         basedir: '.',
         debug: true,
