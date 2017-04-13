@@ -1,0 +1,3 @@
+interface Abstraction {}
+
+export {Abstraction}

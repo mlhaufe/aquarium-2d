@@ -1,0 +1,3 @@
+interface Presentation {}
+
+export {Presentation}
