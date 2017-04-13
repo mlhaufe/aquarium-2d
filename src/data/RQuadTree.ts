@@ -5,6 +5,7 @@ interface RQuadTree {
     readonly capacity: number
     readonly maxDepth: number
     insert(rect: Rect): RQuadTree
+    delete(rect: Rect): RQuadTree
     find(rect: Rect): Rect[]
     clear(): RQuadTree
     split(): RQuadTree
@@ -50,6 +51,19 @@ class Branch implements RQuadTree {
     }
 
     split(): RQuadTree { return this }
+
+    delete(rect: Rect): RQuadTree {
+        return rect.contains(this.bounds)    ? this.clear() : 
+               !rect.intersects(this.bounds) ? this :
+               new Branch(
+                   this.bounds, this.capacity,this.maxDepth,
+                   this.items.filter(item => item.intersects(rect)),
+                   this.NE.delete(rect),
+                   this.NW.delete(rect),
+                   this.SE.delete(rect),
+                   this.SW.delete(rect)
+               )
+    }
 }
 
 class Quadrant implements RQuadTree {
@@ -109,6 +123,15 @@ class Quadrant implements RQuadTree {
             new Quadrant(seBounds,this.capacity,this.maxDepth-1,seItems),
             new Quadrant(swBounds,this.capacity,this.maxDepth-1,swItems)
         )
+    }
+
+    delete(rect: Rect): RQuadTree {
+        return rect.contains(this.bounds)    ? this.clear() : 
+            !rect.intersects(this.bounds) ? this :
+            new Quadrant(
+                this.bounds, this.capacity,this.maxDepth,
+                this.items.filter(item => item.intersects(rect))
+            )
     }
 }
 
