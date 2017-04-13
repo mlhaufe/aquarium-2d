@@ -8,7 +8,6 @@ interface RQuadTree {
     find(rect: Rect): Rect[]
     clear(): RQuadTree
     split(): RQuadTree
-    delete(rect: Rect): RQuadTree
 }
 
 class Branch implements RQuadTree {
@@ -35,7 +34,6 @@ class Branch implements RQuadTree {
                SE.bounds.contains(rect) ? new Branch(b,c,d,i,NE,NW,SE.insert(rect),SW) :
                SW.bounds.contains(rect) ? new Branch(b,c,d,i,NE,NW,SE,SW.insert(rect)) :
                new Branch(b,c,d,i.concat(rect),NE,NW,SE,SW)
-
     }
 
     find(rect: Rect): Rect[] {
@@ -52,9 +50,6 @@ class Branch implements RQuadTree {
     }
 
     split(): RQuadTree { return this }
-
-    //TODO
-    delete(rect: Rect): RQuadTree {  return this }
 }
 
 class Quadrant implements RQuadTree {
@@ -115,9 +110,6 @@ class Quadrant implements RQuadTree {
             new Quadrant(swBounds,this.capacity,this.maxDepth-1,swItems)
         )
     }
-
-    //TODO
-    delete(rect: Rect): RQuadTree { return this }
 }
 
 function create(bounds: Rect, capacity: number, maxDepth): RQuadTree {
