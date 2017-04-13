@@ -2,223 +2,126 @@ import {Rect} from "./Rect"
 
 interface RQuadTree {
     readonly bounds: Rect
-    readonly maxItems: number
+    readonly capacity: number
     readonly maxDepth: number
     insert(rect: Rect): RQuadTree
-    query(rect: Rect): Rect[]
+    find(rect: Rect): Rect[]
     clear(): RQuadTree
     split(): RQuadTree
     delete(rect: Rect): RQuadTree
 }
 
 class Branch implements RQuadTree {
-    readonly NW: RQuadTree
-    readonly NE: RQuadTree
-    readonly SE: RQuadTree
-    readonly SW: RQuadTree
-
     constructor(
-        public readonly bounds: Rect,
-        public readonly maxItems: number,
-        public readonly maxDepth: number
+        readonly bounds: Rect,
+        readonly capacity: number,
+        readonly maxDepth: number,
+        readonly items: Rect[],
+        readonly NE: RQuadTree,
+        readonly NW: RQuadTree,
+        readonly SE: RQuadTree,
+        readonly SW: RQuadTree
     ) {}
 
-    insert(rect: Rect): RQuadTree {}
+    insert(rect: Rect): RQuadTree {
+        var b = this.bounds,   c = this.capacity,
+            d = this.maxDepth, i = this.items,
+            NE = this.NE, NW = this.NW,
+            SE = this.SE, SW = this.SW
 
-    query(rect: Rect): Rect[] {}
+        return !b.contains(rect)        ? this :
+               NE.bounds.contains(rect) ? new Branch(b,c,d,i,NE.insert(rect),NW,SE,SW) :
+               NW.bounds.contains(rect) ? new Branch(b,c,d,i,NE,NW.insert(rect),SE,SW) :
+               SE.bounds.contains(rect) ? new Branch(b,c,d,i,NE,NW,SE.insert(rect),SW) :
+               SW.bounds.contains(rect) ? new Branch(b,c,d,i,NE,NW,SE,SW.insert(rect)) :
+               new Branch(b,c,d,i.concat(rect),NE,NW,SE,SW)
+
+    }
+
+    find(rect: Rect): Rect[] {
+        return !rect.intersects(this.bounds) ? [] :
+            [this.NE,this.NW,this.SE, this.SW]
+            .filter(quad => quad.bounds.intersects(rect))
+            .map(quad => quad.find(rect))
+            .reduce((sum, cur) => sum.concat(cur))
+            .concat(this.items.filter(item => item.intersects(rect)))
+    }
 
     clear(): RQuadTree {
-        return new Empty(this.bounds, this.maxItems, this.maxDepth)
+        return new Quadrant(this.bounds, this.capacity, this.maxDepth, [])
     }
 
     split(): RQuadTree { return this }
 
-    delete(rect: Rect): RQuadTree {}
+    //TODO
+    delete(rect: Rect): RQuadTree {  return this }
 }
 
 class Quadrant implements RQuadTree {
     constructor(
         public readonly bounds: Rect,
-        public readonly maxItems: number,
-        public readonly maxDepth: number
+        public readonly capacity: number,
+        public readonly maxDepth: number,
+        public readonly items: Rect[]
     ) {}
 
-    insert(rect: Rect): RQuadTree {}
+    insert(rect: Rect): RQuadTree {
+        return !this.bounds.contains(rect) ? this :
+            this.items.length == this.capacity && this.maxDepth > 0 ? 
+                this.split().insert(rect) :
+                new Quadrant(
+                    this.bounds,
+                    this.capacity,
+                    this.maxDepth,
+                    this.items.concat(rect)
+                )
+    }
 
-    query(rect: Rect): Rect[] {}
+    find(rect: Rect): Rect[] {
+        return !rect.intersects(this.bounds) ? [] :
+            this.items.filter(item => item.intersects(rect))
+    }
 
     clear(): RQuadTree {
-        return new Empty(this.bounds, this.maxItems, this.maxDepth)
+        return new Quadrant(this.bounds, this.capacity, this.maxDepth, [])
     }
 
-    split(): RQuadTree {}
+    split(): RQuadTree {
+        var floor = Math.floor, items = this.items, b = this.bounds,
+            height = b.height, width = b.width,
+            top = b.top, right = b.right, bottom = b.bottom, left = b.left,
+            midTop = floor(top+height/2), midLeft = floor(left+width/2), 
+            neBounds = new Rect(top,right,midTop,midLeft),
+            nwBounds = new Rect(top,midLeft,midTop,left),
+            seBounds = new Rect(midTop,right,bottom,midLeft),
+            swBounds = new Rect(midTop,midLeft,bottom,left),
+            neItems = items.filter(item => neBounds.contains(item)),
+            nwItems = items.filter(item => nwBounds.contains(item)),
+            seItems = items.filter(item => seBounds.contains(item)),
+            swItems = items.filter(item => swBounds.contains(item)),
+            remItems = items.filter(item => 
+                !neBounds.contains(item) && !nwBounds.contains(item) &&
+                !seBounds.contains(item) && !swBounds.contains(item)
+            );
 
-    delete(rect: Rect): RQuadTree {}
-}
-
-class Empty implements RQuadTree {
-    constructor(
-        public readonly bounds: Rect,
-        public readonly maxItems: number,
-        public readonly maxDepth: number
-    ) {}
-
-    insert(rect: Rect): RQuadTree {}
-
-    query(rect: Rect): Rect[] {}
-
-    clear(): RQuadTree { return this; }
-
-    split(): RQuadTree { }
-
-    delete(rect: Rect): RQuadTree {}
-}
-
-/*
-abstract class RegionQuadTree {
-    public abstract readonly bounds: Rectangle
-    public abstract readonly capacity: number
-    public abstract readonly items: Rectangle[]
-    public abstract readonly maxDepth
-
-    //Creates an empty QuadTree based on the current settings
-    public clear(): RegionQuadTree {
-        return new Empty(
+        return new Branch(
             this.bounds,
             this.capacity,
-            this.maxDepth
+            this.maxDepth-1,
+            remItems,
+            new Quadrant(neBounds,this.capacity,this.maxDepth-1,neItems),
+            new Quadrant(nwBounds,this.capacity,this.maxDepth-1,nwItems),
+            new Quadrant(seBounds,this.capacity,this.maxDepth-1,seItems),
+            new Quadrant(swBounds,this.capacity,this.maxDepth-1,swItems)
         )
     }
-    //subdivides the current node into 4 quadrants
-    public abstract split(): RegionQuadTree
-    //inserts the item
-    public abstract insert(): RegionQuadTree
 
+    //TODO
+    delete(rect: Rect): RQuadTree { return this }
 }
 
-class Leaf extends RegionQuadTree {
-    constructor(
-        public readonly bounds: Rectangle,
-        public readonly capacity: number,
-        public readonly maxDepth: number,
-        public readonly items: Rectangle[]
-    ) { super() }
-
-    public split(): RegionQuadTree<T> {
-        var subWidth = Math.floor(this.bounds.width / 2),
-            subHeight = Math.floor(this.bounds.height),
-            subRect = new Rectangle(subWidth,subHeight),
-            c = this.capacity,
-            px = this.position.x,
-            py = this.position.y,
-            x_2 = Math.floor(px / 2),
-            y_2 = Math.floor(py / 2)
-
-        return new Quadrant<T>(
-            this.position,
-            this.bounds,
-            this.capacity,
-            this.maxDepth,
-            new Leaf<T>(
-                new Point2(px-x_2,py-y_2),
-                subRect,
-                c,
-                this.maxDepth - 1,
-                this.items.filter(item =>
-                    subRect.contains(new Point2(x_2,))
-                    item.position.x <= px && item.position.y <= py
-                )
-            ),
-            new Leaf<T>(
-                new Point2(px+x_2,py-y_2),
-                subRect,
-                c,
-                this.maxDepth - 1,
-                this.items.filter(item => 
-                    item.position.x >= px && item.position.y <= py
-                )
-            ),
-            new Leaf<T>(
-                new Point2(px+x_2,py+y_2),
-                subRect,
-                c,
-                this.maxDepth - 1,
-                this.items.filter(item => 
-                    item.position.x >= px && item.position.y >= py
-                )
-            ),
-            new Leaf<T>(
-                new Point2(px-x_2,py+y_2),
-                subRect,
-                c,
-                this.maxDepth - 1,
-                this.items.filter(item =>
-                    item.position.x <= px && item.position.y >= py
-                )
-            )
-        )
-    }
-}
-
-class Empty extends RegionQuadTree {
-    public readonly items: Rectangle[] = []
-    constructor(
-        public readonly position: Point2,
-        public readonly bounds: Rectangle,
-        public readonly capacity: number,
-        public readonly maxDepth: number
-    ){ super() }
-
-    public split(): RegionQuadTree<T> {
-        var subWidth = Math.floor(this.bounds.width / 2),
-            subHeight = Math.floor(this.bounds.height),
-            subRect = new Rectangle(subWidth,subHeight),
-            c = this.capacity,
-            px = this.position.x,
-            py = this.position.y,
-            x_2 = Math.floor(px / 2),
-            y_2 = Math.floor(py / 2)
-
-        return new Quadrant(
-            this.bounds,
-            this.capacity,
-            this.maxDepth,
-            new Empty(new Point2(px-x_2,py-y_2),subRect,c,this.maxDepth),
-            new Empty(new Point2(px+x_2,py-y_2),subRect,c,this.maxDepth),
-            new Empty(new Point2(px+x_2,py+y_2),subRect,c,this.maxDepth),
-            new Empty(new Point2(px-x_2,py+y_2),subRect,c,this.maxDepth)
-        )
-    }
-}
-
-class Quadrant extends RegionQuadTree {
-    public readonly items: Rectangle[] = []
-    constructor(
-        public readonly bounds: Rectangle,
-        public readonly capacity: number,
-        public readonly maxDepth: number,
-        public readonly NW: RegionQuadTree,
-        public readonly NE: RegionQuadTree,
-        public readonly SE: RegionQuadTree,
-        public readonly SW: RegionQuadTree
-    ){ super() }
-
-    public split(): RegionQuadTree { return this }
-}
-
-function create(
-    bounds: Rectangle,
-    capacity: number,
-    maxDepth: number
-): RegionQuadTree { 
-    return new Empty(position, bounds, capacity, maxDepth)
-}
-
-export {RegionQuadTree, create}
-*/
-
-function create(bounds: Rect, maxItems: number, maxDepth): RQuadTree {
-    return new Empty(bounds, maxItems, maxDepth)
+function create(bounds: Rect, capacity: number, maxDepth): RQuadTree {
+    return new Quadrant(bounds, capacity, maxDepth, [])
 }
     
 export default create

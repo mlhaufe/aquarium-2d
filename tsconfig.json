@@ -1,8 +1,5 @@
 {
-    "files": [
-        "src/main.ts",
-        "src/greet.ts"
-    ],
+    "files": ["src/main.ts"],
     "compilerOptions": {
         "noImplicitAny": true,
         "target": "es5"

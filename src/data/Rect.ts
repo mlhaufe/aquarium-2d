@@ -1,13 +1,27 @@
 class Rect {
-    constructor(
-        public readonly x: number,
-        public readonly y: number,
-        public readonly width: number,
-        public readonly height: number
-    ){}
+    readonly width: number
+    readonly height: number
 
-    public contains(rect: Rect): boolean {
-        
+    constructor(
+        readonly top: number,
+        readonly right: number,
+        readonly bottom: number,
+        readonly left: number
+    ){
+        this.width = this.right - this.left
+        this.height = this.bottom - this.top
+    }
+
+    contains(rect: Rect): boolean {
+        return rect.top    >= this.top &&
+               rect.right  <= this.right &&
+               rect.bottom <= this.bottom &&
+               rect.left   >= this.left
+    }
+
+    intersects(rect: Rect): boolean {
+        return rect.top <= this.bottom && rect.bottom >= this.top
+            && rect.left <= this.right && rect.right >= this.left
     }
 }
 
