@@ -1,11 +1,13 @@
+// Reference
+// <http://tutorial.math.lamar.edu/Classes/CalcIII/VectorFunctions.aspx>
 class Vector2 {
     static readonly Zero: Vector2 = new Vector2(0, 0)
     static readonly UnitX: Vector2 = new Vector2(1, 0)
     static readonly UnitY: Vector2 = new Vector2(0,1)
 
     constructor(
-        public readonly a: number,
-        public readonly b: number
+        readonly a: number,
+        readonly b: number
     ) { }
 
     // <a,b> + <c,d> = <a+c,b+d>

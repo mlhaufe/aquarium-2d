@@ -1,6 +1,7 @@
 {
     "files": ["src/main.ts"],
     "compilerOptions": {
+        "strict": true,
         "noImplicitAny": true,
         "target": "es5"
     }

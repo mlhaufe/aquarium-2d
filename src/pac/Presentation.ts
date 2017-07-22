@@ -1,3 +1,0 @@
-interface Presentation {}
-
-export {Presentation}

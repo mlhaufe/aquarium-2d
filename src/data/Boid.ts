@@ -1,19 +1,18 @@
-import {Rect} from "./Rect"
+import {BoundingRect} from "./BoundingRect"
+import {Vector2} from "./Vector2"
 
-class BoundingRect<T> extends Rect {
-    constructor(
-        readonly item: T,
-        top: number,
-        right: number,
-        bottom: number,
-        left: number
-        ) { super(top,right,bottom,left) }
-}
+
+// References:
+// <http://www.red3d.com/cwr/boids/>
+// <https://en.wikipedia.org/wiki/Boids>
 
 class Boid {
+    constructor(public position: Vector2){
+
+    }
     getBoundingRect(): BoundingRect<Boid> { 
         return new BoundingRect<Boid>(this,0,0,0,0);
     }
 }
 
-export default function boid(): Boid{ return new Boid() }
+export {Boid}

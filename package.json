@@ -23,11 +23,12 @@
   },
   "homepage": "https://github.com/mlhaufe/aquarium-2d#readme",
   "devDependencies": {
-    "browserify": "^14.3.0",
+    "browserify": "^14.4.0",
     "gulp": "^3.9.1",
     "gulp-typescript": "^3.1.6",
     "tsify": "^3.0.1",
-    "typescript": "^2.2.2",
-    "vinyl-source-stream": "^1.1.0"
+    "typescript": "^2.4.1",
+    "vinyl-source-stream": "^1.1.0",
+    "webpack": "^3.1.0"
   }
 }
